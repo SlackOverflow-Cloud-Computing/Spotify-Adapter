@@ -15,11 +15,17 @@ class ServiceFactory(BaseServiceFactory):
     @classmethod
     def get_service(cls, service_name):
 
-        match service_name:
-            case "SpotifyAPIService":
-                result = SpotifyAPIService(client_id, client_secret)
+        # match service_name:
+        #     case "SpotifyAPIService":
+        #         result = SpotifyAPIService(client_id, client_secret)
+        #
+        #     case _:
+        #         result = None
 
-            case _:
-                result = None
+        if service_name == "SpotifyAPIService":
+            result = SpotifyAPIService(client_id, client_secret)
+
+        else:
+            result = None
 
         return result
