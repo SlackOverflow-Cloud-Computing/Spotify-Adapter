@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, status, HTTPException
 from pydantic import BaseModel
 
 from app.models.user import User
@@ -19,7 +19,7 @@ class LoginResponse(BaseModel):
     token: Token
 
 
-@router.post("/login", tags=["users"])
+@router.post("/login", tags=["users"], status_code=status.HTTP_201_CREATED)
 async def login(request: LoginRequest) -> LoginResponse:
     api_service = ServiceFactory.get_service("SpotifyAPIService")
     token = api_service.login(request.auth_code, redirect_uri)
