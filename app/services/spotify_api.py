@@ -10,6 +10,7 @@ from pydantic import ValidationError
 from app.models.user import User
 from app.models.spotify_token import SpotifyToken
 from app.models.playlist import Playlist
+from app.models.song import Song, Traits
 
 JWT_SECRET = os.getenv('JWT_SECRET')
 ALGORITHM = "HS256"
@@ -150,3 +151,32 @@ class SpotifyAPIService:
 
         except requests.RequestException as e:
             raise Exception(f"An error occurred while fetching user playlists: {str(e)}")
+
+    def get_recommendations(self, traits: Traits) -> List[Song]:
+        # TODO: Proper headers and auth here. I don't have the details
+        url = "https://api.spotify.com/v1/recommendations?"
+        headers = {}
+        for param in traits.model_dump():
+            if isinstance(traits[param], list):
+                url += f"{param}={'%2'.join(traits[param])}&"
+            url += f"{param}={traits[param]}&"
+        url = url[:-1]
+        
+        try:
+            response = requests.get(url, headers=headers)
+            if response.status_code != 200:
+                raise Exception(f"Failed to fetch recommendations: {response.status_code} - {response.text}")
+            
+            recommendations = response.json()
+            songs = []
+            for track in recommendations.get("tracks"):
+                song = Song(
+                    id=track.get("id"),
+                    name=track.get("name"),
+                    artists=[artist.get("name") for artist in track.get("artists")],
+                )
+                songs.append(song)
+            return songs
+
+        except requests.RequestException as e:
+            raise Exception(f"An error occurred while fetching song recommendations: {str(e)}")
