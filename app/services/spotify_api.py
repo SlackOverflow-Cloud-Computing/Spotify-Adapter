@@ -21,12 +21,22 @@ class SpotifyAPIService:
         self.client_id = client_id
         self.client_secret = client_secret
 
-    def validate_token(self, token: str) -> bool:
-        """Validate a JWT token."""
+    def validate_token(self, token: str, id: Optional[str]=None, scope: Optional[tuple[str, str]]=None) -> bool:
+        """Validate a JWT token.
+
+        Optionally checks if the token's user ID matches the given ID, and
+        if the token has the required scope for the endpoint.
+        Scope is of the form ("/endpoint", "METHOD").
+        """
         try:
             payload = jwt.decode(token, JWT_SECRET, algorithms=[ALGORITHM])
+            if id is not None and payload.get("sub") != id:
+                return False
+            if scope is not None and scope[1] not in payload.get("scopes").get(scope[0]):
+                return False
             return True
-        except jwt.JWTError:
+
+        except jwt.exceptions.InvalidTokenError:
             return False
 
     def login(self, auth_code, redirect_uri) -> SpotifyToken:
@@ -161,12 +171,12 @@ class SpotifyAPIService:
                 url += f"{param}={'%2'.join(traits[param])}&"
             url += f"{param}={traits[param]}&"
         url = url[:-1]
-        
+
         try:
             response = requests.get(url, headers=headers)
             if response.status_code != 200:
                 raise Exception(f"Failed to fetch recommendations: {response.status_code} - {response.text}")
-            
+
             recommendations = response.json()
             songs = []
             for track in recommendations.get("tracks"):

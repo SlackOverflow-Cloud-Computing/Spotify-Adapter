@@ -24,7 +24,7 @@ class LoginResponse(BaseModel):
     token: SpotifyToken
 
 
-@router.post("/login", tags=["users"], status_code=status.HTTP_201_CREATED)
+@router.post("/auth/login", tags=["users"], status_code=status.HTTP_201_CREATED)
 async def login(request: LoginRequest) -> LoginResponse:
     api_service = ServiceFactory.get_service("SpotifyAPIService")
     token = api_service.login(request.auth_code, redirect_uri)
@@ -32,15 +32,15 @@ async def login(request: LoginRequest) -> LoginResponse:
     return LoginResponse(user=user, token=token)
 
 
-@router.get("user/{user_id}/playlists", tags=["users", "playlists"])
+@router.get("/users/{user_id}/playlists", tags=["users", "playlists"])
 async def get_user_playlists(user_id: str, spotify_token: SpotifyToken, token: str = Depends(oauth2_scheme)):
     api_service = ServiceFactory.get_service("SpotifyAPIService")
-    if user_id != spotify_token.user_id:
-        raise HTTPException(status_code=403, detail="User does not have access to this resource")
-    elif not api_service.validate_token():
+
+    if not api_service.validate_token(token, id=user_id, scope=("/users/{user_id}/playlists", "GET")):
         raise HTTPException(status_code=401, detail="Invalid Token")
 
     return api_service.get_user_playlists(spotify_token)
+
 
 @router.get("/recommendations", tags=["recommendations"], status_code=status.HTTP_200_OK)
 async def get_recommendations( # TODO: better way to do this? dont want to use a payload because it is a get request
@@ -89,7 +89,8 @@ async def get_recommendations( # TODO: better way to do this? dont want to use a
         limit: Optional[int] = None,
         market: Optional[str] = None,
         genres: Optional[List[str]] = None,
-        seed_tracks: Optional[List[str]] = None
+        seed_tracks: Optional[List[str]] = None,
+        token: str = Depends(oauth2_scheme)
     ) -> List[Song]:
     api_service = ServiceFactory.get_service("SpotifyAPIService")
     traits = Traits(
@@ -141,6 +142,8 @@ async def get_recommendations( # TODO: better way to do this? dont want to use a
         seed_tracks=seed_tracks
     )
     try:
+        if not api_service.validate_token(token, scope=("/recommendations", "GET")):
+            raise HTTPException(status_code=401, detail="Invalid Token")
         return api_service.get_recommendations(traits)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
