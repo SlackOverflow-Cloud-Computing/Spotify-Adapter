@@ -6,7 +6,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: aws-linux-2
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -16,19 +16,18 @@ jobs:
         with:
           python-version: "3.8"
 
-      - name: Install dependencies
-        run: python -m venv venv && source venv/bin/activate && pip install -r requirements.txt
+      - name: Install dependencies in Lambda-like environment
+        run: |
+          docker run --rm -v "$PWD":/var/task -w /var/task \
+            lambci/lambda:build-python3.8 \
+            pip install -r requirements.txt -t ./package
 
-      - name: create site-packages
-        run: mkdir site-packages
-      - name: Copy site-packages
-        run: cp -r venv/lib/python3.8/site-packages/* site-packages/
       - name: Copy main
         run: cp app/main.py ./main.py
       - name: Zip everything
         run: |
           zip -r app.zip app main.py
-          cd site-packages && zip -r ../app.zip *
+          cd package && zip -r ../app.zip *
 
       - name: Upload zip artifact
         uses: actions/upload-artifact@v4
