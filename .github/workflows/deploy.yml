@@ -14,15 +14,25 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v2
         with:
-          python-version: "3.8"
+          python-version: "3.13"
 
-      - name: Install dependencies
-        run: python -m venv venv && source venv/bin/activate && pip install -r requirements.txt
+      - name: Install dependencies as wheels compatible with Lambda
+        run: |
+          pip install \
+            --platform manylinux2014_x86_64 \
+            --target package \
+            --implementation cp \
+            --python-version 3.13 \
+            --only-binary=:all: --upgrade \
+            -r requirements.txt
 
-      - name: Create archive of dependencies
-        run: zip -r9 app.zip venv/lib/python3.8/site-packages
-      - name: Add app code to archive
-        run: zip -r app.zip app
+      - name: Copy main
+        run: cp app/main.py ./main.py
+      - name: Zip everything
+        run: |
+          zip -r app.zip app framework main.py
+          cd package && zip -r ../app.zip *
+
       - name: Upload zip artifact
         uses: actions/upload-artifact@v4
         with:
