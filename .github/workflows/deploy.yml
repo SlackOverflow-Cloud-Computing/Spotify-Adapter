@@ -16,11 +16,15 @@ jobs:
         with:
           python-version: "3.8"
 
-      - name: Install dependencies in Lambda-like environment
+      - name: Install dependencies as wheels compatible with Lambda
         run: |
-          docker run --rm -v "$PWD":/var/task -w /var/task \
-            lambci/lambda:build-python3.8 \
-            pip install -r requirements.txt -t ./package
+          pip install \
+            --platform manylinux2014_x86_64 \
+            --target package \
+            --implementation cp \
+            --python-version 3.8 \
+            --only-binary=:all: --upgrade \
+            -r requirements.txt
 
       - name: Copy main
         run: cp app/main.py ./main.py
