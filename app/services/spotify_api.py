@@ -164,11 +164,14 @@ class SpotifyAPIService:
         except requests.RequestException as e:
             raise Exception(f"An error occurred while fetching user playlists: {str(e)}")
 
-    def get_recommendations(self, traits: Traits) -> List[Song]:
+    def get_recommendations(self, traits: Traits, spotify_token: SpotifyToken) -> List[Song]:
         # TODO: Proper headers and auth here. I don't have the details
         url = "https://api.spotify.com/v1/recommendations?"
-        headers = {}
-        for param in traits.model_dump():
+        headers = {
+            "Authorization": f"Bearer {spotify_token.access_token}"
+        }
+        traits = traits.model_dump()
+        for param in traits:
             if isinstance(traits[param], list):
                 url += f"{param}={'%2'.join(traits[param])}&"
             url += f"{param}={traits[param]}&"
@@ -190,5 +193,6 @@ class SpotifyAPIService:
                 songs.append(song)
             return songs
 
-        except requests.RequestException as e:
+        except Exception as e:
+            print(e)
             raise Exception(f"An error occurred while fetching song recommendations: {str(e)}")

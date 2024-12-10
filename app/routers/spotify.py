@@ -44,6 +44,7 @@ async def get_user_playlists(user_id: str, spotify_token: SpotifyToken, token: s
 
 @router.get("/recommendations", tags=["recommendations"], status_code=status.HTTP_200_OK)
 async def get_recommendations( # TODO: better way to do this? dont want to use a payload because it is a get request
+        spotify_token: SpotifyToken,
         min_acousticness: Optional[float] = None,
         max_acousticness: Optional[float] = None,
         target_acousticness: Optional[float] = None,
@@ -90,7 +91,7 @@ async def get_recommendations( # TODO: better way to do this? dont want to use a
         market: Optional[str] = None,
         genres: Optional[List[str]] = None,
         seed_tracks: Optional[List[str]] = None,
-        token: str = Depends(oauth2_scheme)
+        token: str = Depends(oauth2_scheme),
     ) -> List[Song]:
     api_service = ServiceFactory.get_service("SpotifyAPIService")
     traits = Traits(
@@ -144,7 +145,7 @@ async def get_recommendations( # TODO: better way to do this? dont want to use a
     try:
         if not api_service.validate_token(token, scope=("/recommendations", "GET")):
             raise HTTPException(status_code=401, detail="Invalid Token")
-        return api_service.get_recommendations(traits)
+        return api_service.get_recommendations(traits, spotify_token)
     except Exception as e:
         # raise nested exception instead of generic 500
         if isinstance(e, HTTPException):
