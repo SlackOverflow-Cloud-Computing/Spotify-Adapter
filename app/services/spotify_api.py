@@ -6,12 +6,14 @@ from typing import Optional, List
 import jwt
 from fastapi import FastAPI, HTTPException, Request
 from pydantic import ValidationError
+import dotenv
 
 from app.models.user import User
 from app.models.spotify_token import SpotifyToken
 from app.models.playlist import Playlist
 from app.models.song import Song, Traits
 
+dotenv.load_dotenv()
 JWT_SECRET = os.getenv('JWT_SECRET')
 ALGORITHM = "HS256"
 

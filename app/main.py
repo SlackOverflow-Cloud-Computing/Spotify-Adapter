@@ -1,6 +1,7 @@
 from fastapi import Depends, FastAPI
 import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
+from mangum import Mangum
 
 from app.routers import spotify
 
@@ -18,6 +19,9 @@ app.include_router(spotify.router)
 @app.get("/")
 async def root():
     return {"message": "Hello Bigger Applications!"}
+
+
+handler = Mangum(app=app)
 
 
 if __name__ == "__main__":

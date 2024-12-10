@@ -1,11 +1,11 @@
-name: Deploy to AWS EC2
+name: Deploy to AWS
 
 on:
   push:
     branches: [main]
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -20,13 +20,41 @@ jobs:
         run: python -m venv venv && source venv/bin/activate && pip install -r requirements.txt
 
       - name: Create archive of dependencies
-        run: /
-          cd venv/lib/python3.8/site-packages
-          zip -r9 ../../../../app.zip .
+        run: zip -r9 app.zip venv/lib/python3.8/site-packages
       - name: Add app code to archive
-        run: zip -g app.zip app.py
+        run: zip -r app.zip app
       - name: Upload zip artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: app
           path: app.zip
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - name: Install AWS CLI
+        uses: unfor19/install-aws-cli-action@v1
+        with:
+          version: 1
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+      - name: Download Lambda app.zip
+        uses: actions/download-artifact@v4
+        with:
+          name: app
+      - name: Upload to S3
+        run: aws s3 cp app.zip s3://adapter/app.zip
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+      - name: Deploy new Lambda
+        run: aws lambda update-function-code --function-name spotify_adapter --s3-bucket adapter --s3-key app.zip
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
