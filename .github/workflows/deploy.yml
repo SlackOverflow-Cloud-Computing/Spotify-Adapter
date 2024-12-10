@@ -30,7 +30,7 @@ jobs:
         run: cp app/main.py ./main.py
       - name: Zip everything
         run: |
-          zip -r app.zip app main.py
+          zip -r app.zip app framework main.py
           cd package && zip -r ../app.zip *
 
       - name: Upload zip artifact
