@@ -15,6 +15,7 @@ class User(BaseModel):
     profile_image: Optional[str] = None     # Spotify profile image URL
     country: Optional[str] = None           # Spotify country
 
-    # Our own information - to be filled in by the composite service
-    created_at: Optional[datetime]          # Date format as string
-    last_login: Optional[datetime]          # Date format as string
+    # Our own information
+    jwt: Optional[str] = None               # JWT token
+    created_at: Optional[datetime] = None   # Date format as string
+    last_login: Optional[datetime] = None   # Date format as string
