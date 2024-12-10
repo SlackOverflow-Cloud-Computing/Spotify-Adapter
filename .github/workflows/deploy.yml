@@ -14,7 +14,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v2
         with:
-          python-version: "3.8"
+          python-version: "3.13"
 
       - name: Install dependencies as wheels compatible with Lambda
         run: |
@@ -22,7 +22,7 @@ jobs:
             --platform manylinux2014_x86_64 \
             --target package \
             --implementation cp \
-            --python-version 3.8 \
+            --python-version 3.13 \
             --only-binary=:all: --upgrade \
             -r requirements.txt
 
