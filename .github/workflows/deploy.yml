@@ -19,22 +19,18 @@ jobs:
       - name: Install dependencies
         run: python -m venv venv && source venv/bin/activate && pip install -r requirements.txt
 
-      - name: mkdir deployment
-        run: mkdir deployment
       - name: Copy site-packages
-        run: cp -r venv/lib/python3.8/site-packages/* deployment/
+        run: cp -r venv/lib/python3.8/site-packages/* site-packages/
       - name: Copy main
-        run: cp app/main.py deployment/main.py
-      - name: Copy app
-        run: cp -r app deployment/app
+        run: cp app/main.py ./main.py
       - name: Zip everything
-        run: zip -r deployment.zip deployment
+        run: zip -r app.zip app main.py site-packages/*
 
       - name: Upload zip artifact
         uses: actions/upload-artifact@v4
         with:
-          name: deployment
-          path: deployment.zip
+          name: app
+          path: app.zip
 
   deploy:
     runs-on: ubuntu-latest
@@ -47,13 +43,13 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_SECRET_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
-      - name: Download Lambda deployment.zip
+      - name: Download Lambda app.zip
         uses: actions/download-artifact@v4
         with:
-          name: deployment
+          name: app
 
       - name: Upload to S3
-        run: aws s3 cp deployment.zip s3://adapter/deployment.zip
+        run: aws s3 cp app.zip s3://adapter/app.zip
 
       - name: Deploy new Lambda
-        run: aws lambda update-function-code --function-name spotify_adapter --s3-bucket adapter --s3-key deployment.zip
+        run: aws lambda update-function-code --function-name spotify_adapter --s3-bucket adapter --s3-key app.zip
