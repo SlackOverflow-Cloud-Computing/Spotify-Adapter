@@ -20,7 +20,7 @@ jobs:
         run: python -m venv venv && source venv/bin/activate && pip install -r requirements.txt
 
       - name: Create archive of dependencies
-        run: /
+        run: |
           cd venv/lib/python3.8/site-packages
           zip -r9 ../../../../app.zip .
       - name: Add app code to archive
