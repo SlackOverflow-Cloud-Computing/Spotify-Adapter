@@ -20,11 +20,14 @@ jobs:
         run: python -m venv venv && source venv/bin/activate && pip install -r requirements.txt
 
       - name: Copy site-packages
-        run: cp -r venv/lib/python3.8/site-packages ./site-packages
+        run: mkdir -p deployment
+        run: cp -r venv/lib/python3.8/site-packages/* deployment/
       - name: Copy main
-        run: cp app/main.py ./main.py
+        run: cp app/main.py deployment/main.py
+      - name: Copy app
+        run: cp -r app deployment/app
       - name: Zip everything
-        run: zip -r app.zip app main.py site-packages/*
+        run: zip -r app.zip deployment
 
       - name: Upload zip artifact
         uses: actions/upload-artifact@v4
