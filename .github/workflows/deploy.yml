@@ -24,7 +24,7 @@ jobs:
           cd venv/lib/python3.8/site-packages
           zip -r9 ../../../../app.zip .
       - name: Add app code to archive
-        run: zip -g app.zip app.py
+        run: cd ../../../../ && zip -g app.zip app
       - name: Upload zip artifact
         uses: actions/upload-artifact@v4
         with:
