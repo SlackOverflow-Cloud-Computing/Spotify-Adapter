@@ -49,8 +49,6 @@ async def get_user_playlists(user_id: str, spotify_token: SpotifyToken, token: s
 
     return api_service.get_user_playlists(spotify_token)
 
-
-<<<<<<< HEAD
 @router.post("/users/{user_id}/playlists", tags=["playlists"])
 async def create_playlist(user_id: str, request: CreatePlaylistRequest, token: str = Depends(oauth2_scheme)):
     api_service = ServiceFactory.get_service("SpotifyAPIService")
@@ -59,7 +57,7 @@ async def create_playlist(user_id: str, request: CreatePlaylistRequest, token: s
         raise HTTPException(status_code=401, detail="Invalid Token")
 
     api_service.create_playlist(user_id, request.token, request.name, request.description, request.song_ids)
-=======
+
 @router.get("/users/{user_id}/refreshed_token", tags=["users"])
 async def get_refreshed_token(user_id: str,
                               access_token: str,
@@ -75,7 +73,6 @@ async def get_refreshed_token(user_id: str,
     if not api_service.validate_token(token, scope=("/users/{user_id}/refreshed_token", "GET")):
         raise HTTPException(status_code=401, detail="Invalid Token")
     return api_service.refresh_token(spotify_token)
->>>>>>> 60ae32b752c222cdb06f286656a9f846df1f269e
 
 
 @router.get("/recommendations", tags=["recommendations"], status_code=status.HTTP_200_OK)
