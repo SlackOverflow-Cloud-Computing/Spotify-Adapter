@@ -19,22 +19,22 @@ jobs:
       - name: Install dependencies
         run: python -m venv venv && source venv/bin/activate && pip install -r requirements.txt
 
-      - name: mkdir app
-        run: mkdir app
+      - name: mkdir deployment
+        run: mkdir deployment
       - name: Copy site-packages
-        run: cp -r venv/lib/python3.8/site-packages/* app/
+        run: cp -r venv/lib/python3.8/site-packages/* deployment/
       - name: Copy main
-        run: cp app/main.py app/main.py
+        run: cp app/main.py deployment/main.py
       - name: Copy app
-        run: cp -r app app/app
+        run: cp -r app deployment/app
       - name: Zip everything
-        run: zip -r app.zip app
+        run: zip -r deployment.zip deployment
 
       - name: Upload zip artifact
         uses: actions/upload-artifact@v4
         with:
-          name: app
-          path: app.zip
+          name: deployment
+          path: deployment.zip
 
   deploy:
     runs-on: ubuntu-latest
