@@ -23,6 +23,12 @@ class LoginResponse(BaseModel):
     user: User
     token: SpotifyToken
 
+class CreatePlaylistRequest(BaseModel):
+    token: SpotifyToken
+    name: str
+    description: str
+    song_ids: List[str]
+
 
 @router.post("/auth/login", tags=["users"], status_code=status.HTTP_201_CREATED)
 async def login(request: LoginRequest) -> LoginResponse:
@@ -40,6 +46,16 @@ async def get_user_playlists(user_id: str, spotify_token: SpotifyToken, token: s
         raise HTTPException(status_code=401, detail="Invalid Token")
 
     return api_service.get_user_playlists(spotify_token)
+
+
+@router.post("/users/{user_id}/playlists", tags=["playlists"])
+async def create_playlist(user_id: str, request: CreatePlaylistRequest, token: str = Depends(oauth2_scheme)):
+    api_service = ServiceFactory.get_service("SpotifyAPIService")
+
+    if not api_service.validate_token(token, id=user_id, scope=("/playlists", "POST")):
+        raise HTTPException(status_code=401, detail="Invalid Token")
+
+    api_service.create_playlist(user_id, request.token, request.name, request.description, request.song_ids)
 
 
 @router.get("/recommendations", tags=["recommendations"], status_code=status.HTTP_200_OK)

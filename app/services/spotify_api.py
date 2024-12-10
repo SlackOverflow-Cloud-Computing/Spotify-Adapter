@@ -146,23 +146,56 @@ class SpotifyAPIService:
             items = response.json().get("items")
             for item in items:
                 playlist = Playlist.parse_obj(item)
+                if not playlist:
+                    print("No playlist found")
+                    return []
                 track_info = requests.get(item.get("tracks").get("href"), headers=headers)
                 print(track_info)
-                # TODO: Insert tracks into playlist object
-
-            # playlists = [Playlist(
-            #     id = playlist.get("id"),
-            #     name = playlist.get("name"),
-            #     descrption = playlist.get("description"),
-            #     owner_id = playlist.get("owner").get("id"),
-            #     image_url = playlist.get("images")[0].get("url") if playlist.get("images") else None,
-            #     tracks = None
-            # ) for playlist in playlists]
+                for track in track_info.json().get("items"):
+                    playlist.tracks.append(track.get("track").get("id"))
 
             return playlists
 
         except requests.RequestException as e:
             raise Exception(f"An error occurred while fetching user playlists: {str(e)}")
+
+
+    def create_playlist(self, user_id: str, token: SpotifyToken, name: str, description: str, song_ids: List[str], public: bool = False):
+        headers = {
+            "Authorization": f"Bearer {token.access_token}"
+        }
+
+        # Create the playlist
+        try:
+            url = "https://api.spotify.com/v1/users/{user_id}/playlists"
+            body = {
+                "name": name,
+                "public": public,
+                "description": "Playlist from Subwoofer"
+            }
+            response = requests.post(url, headers=headers, json=body)
+            if response.status_code != 201:
+                raise Exception(f"Failed to create playlist: {response.status_code} - {response.text}")
+
+            data = response.json()
+            playlist_id = data.get("id")
+
+        except Exception as e:
+            raise Exception(f"An error occurred while creating the playlist: {str(e)}")
+
+        # Add the songs to the playlist
+        try:
+            url = f"https://api.spotify.com/v1/playlists/{playlist_id}/tracks"
+            body = {
+                "uris": [f"spotify:track:{song_id}" for song_id in song_ids]
+            }
+            response = requests.post(url, headers=headers, json=body)
+            if response.status_code != 201:
+                raise Exception(f"Failed to add songs to the playlist: {response.status_code} - {response.text}")
+
+        except Exception as e:
+            raise Exception(f"An error occurred while adding songs to the playlist: {str(e)}")
+
 
     def get_recommendations(self, traits: Traits, spotify_token: SpotifyToken) -> List[Song]:
         # TODO: Proper headers and auth here. I don't have the details
