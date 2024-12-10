@@ -26,7 +26,9 @@ jobs:
       - name: Copy main
         run: cp app/main.py ./main.py
       - name: Zip everything
-        run: zip -r app.zip app main.py site-packages/*
+        run: |
+          zip -r app.zip app main.py
+          cd site-packages && zip -r ../app.zip *
 
       - name: Upload zip artifact
         uses: actions/upload-artifact@v4
