@@ -176,22 +176,19 @@ class SpotifyAPIService:
         }
         traits = traits.model_dump()
         genres = traits["genres"]
-        q = "".join(["genre:" + g + "%20OR" for g in genres])
-        q = q[:-5]
+        # q = "".join(["genre:" + g + "%20OR" for g in genres])
+        # q = q[:-5]
+        q = "genre:" + genres[0]
         url += f"q={q}&type=track&limit=3"
-        print(url)
 
         try:
             response = requests.get(url, headers=headers)
-            if response.status_code != 200:
-                print(response.status_code)
-                print(response.text)                
+            if response.status_code != 200:              
                 raise Exception(f"Failed to fetch recommendations: {response.status_code}")
 
-            recommendations = response.json()
-            print(recommendations)
+            recommendations = response.json().get("tracks").get("items")
             songs = []
-            for track in recommendations.get("tracks"):
+            for track in recommendations:
                 song = Song(
                     id=track.get("id"),
                     name=track.get("name"),
