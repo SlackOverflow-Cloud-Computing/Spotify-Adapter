@@ -22,7 +22,7 @@ jobs:
       - name: Create archive of dependencies
         run: zip -r9 app.zip venv/lib/python3.8/site-packages
       - name: Add app code to archive
-        run: zip -r app.zip app
+        run: zip -r app.zip app/*
       - name: Upload zip artifact
         uses: actions/upload-artifact@v4
         with:
