@@ -47,13 +47,13 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_SECRET_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
-      - name: Download Lambda app.zip
+      - name: Download Lambda deployment.zip
         uses: actions/download-artifact@v4
         with:
-          name: app
+          name: deployment
 
       - name: Upload to S3
-        run: aws s3 cp app.zip s3://adapter/app.zip
+        run: aws s3 cp deployment.zip s3://adapter/deployment.zip
 
       - name: Deploy new Lambda
-        run: aws lambda update-function-code --function-name spotify_adapter --s3-bucket adapter --s3-key app.zip
+        run: aws lambda update-function-code --function-name spotify_adapter --s3-bucket adapter --s3-key deployment.zip
