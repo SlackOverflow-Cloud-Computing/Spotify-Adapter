@@ -146,4 +146,7 @@ async def get_recommendations( # TODO: better way to do this? dont want to use a
             raise HTTPException(status_code=401, detail="Invalid Token")
         return api_service.get_recommendations(traits)
     except Exception as e:
+        # raise nested exception instead of generic 500
+        if isinstance(e, HTTPException):
+            raise e
         raise HTTPException(status_code=500, detail=str(e))
