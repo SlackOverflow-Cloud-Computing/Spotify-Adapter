@@ -3,7 +3,7 @@ import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
 from mangum import Mangum
 
-from app.routers import spotify
+from routers import spotify
 
 app = FastAPI()
 
