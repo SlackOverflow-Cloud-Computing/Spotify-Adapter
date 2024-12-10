@@ -1,4 +1,4 @@
-from fastapi import APIRouter, status, HTTPException, Depends
+from fastapi import APIRouter, status, HTTPException, Depends, Query
 from fastapi.security import OAuth2PasswordBearer
 from pydantic import BaseModel
 from typing import List, Optional
@@ -7,7 +7,8 @@ from app.models.user import User
 from app.models.spotify_token import SpotifyToken
 from app.models.song import Song, Traits
 from app.services.service_factory import ServiceFactory
-import dotenv, os
+import dotenv
+import os
 
 
 dotenv.load_dotenv()
@@ -18,6 +19,7 @@ router = APIRouter()
 
 class LoginRequest(BaseModel):
     auth_code: str
+
 
 class LoginResponse(BaseModel):
     user: User
@@ -42,57 +44,74 @@ async def get_user_playlists(user_id: str, spotify_token: SpotifyToken, token: s
     return api_service.get_user_playlists(spotify_token)
 
 
+@router.get("/users/{user_id}/refreshed_token", tags=["users"])
+async def get_refreshed_token(user_id: str,
+                              access_token: str,
+                              token_type: str,
+                              scope: str,
+                              expires_in: int,
+                              refresh_token: str,
+                              token: str = Depends(oauth2_scheme)):
+    api_service = ServiceFactory.get_service("SpotifyAPIService")
+    spotify_token = SpotifyToken(access_token=access_token, token_type=token_type,
+                                 scope=scope, expires_in=expires_in, refresh_token=refresh_token)
+
+    if not api_service.validate_token(token, scope=("/users/{user_id}/refreshed_token", "GET")):
+        raise HTTPException(status_code=401, detail="Invalid Token")
+    return api_service.refresh_token(spotify_token)
+
+
 @router.get("/recommendations", tags=["recommendations"], status_code=status.HTTP_200_OK)
-async def get_recommendations( # TODO: better way to do this? dont want to use a payload because it is a get request
-        spotify_token: SpotifyToken,
-        min_acousticness: Optional[float] = None,
-        max_acousticness: Optional[float] = None,
-        target_acousticness: Optional[float] = None,
-        min_danceability: Optional[float] = None,
-        max_danceability: Optional[float] = None,
-        target_danceability: Optional[float] = None,
-        min_duration_ms: Optional[int] = None,
-        max_duration_ms: Optional[int] = None,
-        target_duration_ms: Optional[int] = None,
-        min_energy: Optional[float] = None,
-        max_energy: Optional[float] = None,
-        target_energy: Optional[float] = None,
-        min_instrumentalness: Optional[float] = None,
-        max_instrumentalness: Optional[float] = None,
-        target_instrumentalness: Optional[float] = None,
-        min_key: Optional[int] = None,
-        max_key: Optional[int] = None,
-        target_key: Optional[int] = None,
-        min_liveness: Optional[float] = None,
-        max_liveness: Optional[float] = None,
-        target_liveness: Optional[float] = None,
-        min_loudness: Optional[float] = None,
-        max_loudness: Optional[float] = None,
-        target_loudness: Optional[float] = None,
-        min_mode: Optional[int] = None,
-        max_mode: Optional[int] = None,
-        target_mode: Optional[int] = None,
-        min_popularity: Optional[int] = None,
-        max_popularity: Optional[int] = None,
-        target_popularity: Optional[int] = None,
-        min_speechiness: Optional[float] = None,
-        max_speechiness: Optional[float] = None,
-        target_speechiness: Optional[float] = None,
-        min_tempo: Optional[float] = None,
-        max_tempo: Optional[float] = None,
-        target_tempo: Optional[float] = None,
-        min_time_signature: Optional[int] = None,
-        max_time_signature: Optional[int] = None,
-        target_time_signature: Optional[int] = None,
-        min_valence: Optional[float] = None,
-        max_valence: Optional[float] = None,
-        target_valence: Optional[float] = None,
-        limit: Optional[int] = None,
-        market: Optional[str] = None,
-        genres: Optional[List[str]] = None,
-        seed_tracks: Optional[List[str]] = None,
-        token: str = Depends(oauth2_scheme),
-    ) -> List[Song]:
+async def get_recommendations(  # TODO: better way to do this? dont want to use a payload because it is a get request
+    min_acousticness: Optional[float] = None,
+    max_acousticness: Optional[float] = None,
+    target_acousticness: Optional[float] = None,
+    min_danceability: Optional[float] = None,
+    max_danceability: Optional[float] = None,
+    target_danceability: Optional[float] = None,
+    min_duration_ms: Optional[int] = None,
+    max_duration_ms: Optional[int] = None,
+    target_duration_ms: Optional[int] = None,
+    min_energy: Optional[float] = None,
+    max_energy: Optional[float] = None,
+    target_energy: Optional[float] = None,
+    min_instrumentalness: Optional[float] = None,
+    max_instrumentalness: Optional[float] = None,
+    target_instrumentalness: Optional[float] = None,
+    min_key: Optional[int] = None,
+    max_key: Optional[int] = None,
+    target_key: Optional[int] = None,
+    min_liveness: Optional[float] = None,
+    max_liveness: Optional[float] = None,
+    target_liveness: Optional[float] = None,
+    min_loudness: Optional[float] = None,
+    max_loudness: Optional[float] = None,
+    target_loudness: Optional[float] = None,
+    min_mode: Optional[int] = None,
+    max_mode: Optional[int] = None,
+    target_mode: Optional[int] = None,
+    min_popularity: Optional[int] = None,
+    max_popularity: Optional[int] = None,
+    target_popularity: Optional[int] = None,
+    min_speechiness: Optional[float] = None,
+    max_speechiness: Optional[float] = None,
+    target_speechiness: Optional[float] = None,
+    min_tempo: Optional[float] = None,
+    max_tempo: Optional[float] = None,
+    target_tempo: Optional[float] = None,
+    min_time_signature: Optional[int] = None,
+    max_time_signature: Optional[int] = None,
+    target_time_signature: Optional[int] = None,
+    min_valence: Optional[float] = None,
+    max_valence: Optional[float] = None,
+    target_valence: Optional[float] = None,
+    limit: Optional[int] = None,
+    market: Optional[str] = None,
+    genres: Optional[List[str]] = Query(default=None),
+    seed_tracks: Optional[List[str]] = None,
+    token: str = Depends(oauth2_scheme),
+    spotify_access_token: str = None
+) -> List[Song]:
     api_service = ServiceFactory.get_service("SpotifyAPIService")
     traits = Traits(
         min_acousticness=min_acousticness,
@@ -145,7 +164,7 @@ async def get_recommendations( # TODO: better way to do this? dont want to use a
     try:
         if not api_service.validate_token(token, scope=("/recommendations", "GET")):
             raise HTTPException(status_code=401, detail="Invalid Token")
-        return api_service.get_recommendations(traits, spotify_token)
+        return api_service.get_recommendations(traits, spotify_access_token)
     except Exception as e:
         # raise nested exception instead of generic 500
         if isinstance(e, HTTPException):

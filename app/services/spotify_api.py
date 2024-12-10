@@ -76,8 +76,10 @@ class SpotifyAPIService:
 
     def refresh_token(self, token: SpotifyToken) -> SpotifyToken:
         url = "https://accounts.spotify.com/api/token"
+        auth_header = base64.b64encode(f"{self.client_id}:{self.client_secret}".encode()).decode()
         headers = {
             "Content-Type": "application/x-www-form-urlencoded",
+            "Authorization": f"Basic {auth_header}"
         }
 
         data = {
@@ -90,7 +92,9 @@ class SpotifyAPIService:
             if response.status_code != 200:
                 raise HTTPException(status_code=response.status_code, detail="Failed to refresh token")
 
-            return SpotifyToken.parse_obj(response.json())
+            response = response.json()
+            response["refresh_token"] = token.refresh_token
+            return SpotifyToken.parse_obj(response)
 
         except requests.RequestException as e:
             raise HTTPException(status_code=500, detail=f"Error refreshing token: {str(e)}")
@@ -164,23 +168,58 @@ class SpotifyAPIService:
         except requests.RequestException as e:
             raise Exception(f"An error occurred while fetching user playlists: {str(e)}")
 
-    def get_recommendations(self, traits: Traits, spotify_token: SpotifyToken) -> List[Song]:
-        # TODO: Proper headers and auth here. I don't have the details
+    def get_recommendations(self, traits: Traits, spotify_access_token: str) -> List[Song]:
+        # Unfortunately, Spotify just decided to remove the recommendations endpoint from their API. So we have to use this workaround:
+        url = "https://api.spotify.com/v1/search?"
+        headers = {
+            "Authorization": f"Bearer {spotify_access_token}"
+        }
+        traits = traits.model_dump()
+        genres = traits["genres"]
+        q = "".join(["genre:" + g + "%20OR" for g in genres])
+        q = q[:-5]
+        url += f"q={q}&type=track&limit=3"
+        print(url)
+
+        try:
+            response = requests.get(url, headers=headers)
+            if response.status_code != 200:
+                print(response.status_code)
+                print(response.text)                
+                raise Exception(f"Failed to fetch recommendations: {response.status_code}")
+
+            recommendations = response.json()
+            print(recommendations)
+            songs = []
+            for track in recommendations.get("tracks"):
+                song = Song(
+                    id=track.get("id"),
+                    name=track.get("name"),
+                    artists=[artist.get("name") for artist in track.get("artists")],
+                )
+                songs.append(song)
+            return songs
+
+        except Exception as e:
+            raise Exception(f"An error occurred while fetching song recommendations: {str(e)}")
+        
+        # OLD:
         url = "https://api.spotify.com/v1/recommendations?"
         headers = {
-            "Authorization": f"Bearer {spotify_token.access_token}"
+            "Authorization": f"Bearer {spotify_access_token}"
         }
         traits = traits.model_dump()
         for param in traits:
             if isinstance(traits[param], list):
                 url += f"{param}={'%2'.join(traits[param])}&"
-            url += f"{param}={traits[param]}&"
-        url = url[:-1]
+            elif traits[param] is not None:
+                url += f"{param}={traits[param]}&"
+        url = url[:-1] 
 
         try:
             response = requests.get(url, headers=headers)
-            if response.status_code != 200:
-                raise Exception(f"Failed to fetch recommendations: {response.status_code} - {response.text}")
+            if response.status_code != 200:                
+                raise Exception(f"Failed to fetch recommendations: {response.status_code}")
 
             recommendations = response.json()
             songs = []
@@ -194,5 +233,4 @@ class SpotifyAPIService:
             return songs
 
         except Exception as e:
-            print(e)
             raise Exception(f"An error occurred while fetching song recommendations: {str(e)}")
