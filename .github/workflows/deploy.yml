@@ -19,6 +19,8 @@ jobs:
       - name: Install dependencies
         run: python -m venv venv && source venv/bin/activate && pip install -r requirements.txt
 
+      - name: create site-packages
+        run: mkdir site-packages
       - name: Copy site-packages
         run: cp -r venv/lib/python3.8/site-packages/* site-packages/
       - name: Copy main
