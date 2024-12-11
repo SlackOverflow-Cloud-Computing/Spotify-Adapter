@@ -2,6 +2,7 @@ import os
 import requests
 import base64
 from typing import Optional, List
+import random
 
 import jwt
 from fastapi import FastAPI, HTTPException, Request
@@ -213,7 +214,7 @@ class SpotifyAPIService:
         # q = "".join(["genre:" + g + "%20OR" for g in genres])
         # q = q[:-5]
         q = "genre:" + genres[0]
-        url += f"q={q}&type=track&limit=3"
+        url += f"q={q}&type=track&limit=12"
 
         try:
             response = requests.get(url, headers=headers)
@@ -224,9 +225,16 @@ class SpotifyAPIService:
             songs = []
             for track in recommendations:
                 song = Song(
-                    id=track.get("id"),
-                    name=track.get("name"),
-                    artists=[artist.get("name") for artist in track.get("artists")],
+                    track_id=track.get("id"),
+                    track_name=track.get("name"),
+                    track_artist=track.get("artists")[0].get("name"),
+                    track_popularity=track.get("popularity"),
+                    track_album_id=track.get("album").get("id"),
+                    track_album_name=track.get("album").get("name"),
+                    track_album_release_date=track.get("album").get("release_date"),
+                    tempo=round(random.uniform(95, 130), 3), # Spotify stopped providing tempo data, so we have to use dummy data
+                    danceability=round(random.uniform(0.3, 0.9), 3), # Spotify stopped providing danceability as well, so again we have to use dummy data
+                    duration_ms=track.get("duration_ms")
                 )
                 songs.append(song)
             return songs
