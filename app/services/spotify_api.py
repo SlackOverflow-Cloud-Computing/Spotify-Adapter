@@ -213,7 +213,7 @@ class SpotifyAPIService:
         # q = "".join(["genre:" + g + "%20OR" for g in genres])
         # q = q[:-5]
         q = "genre:" + genres[0]
-        url += f"q={q}&type=track&limit=10"
+        url += f"q={q}&type=track&limit=12"
 
         try:
             response = requests.get(url, headers=headers)
