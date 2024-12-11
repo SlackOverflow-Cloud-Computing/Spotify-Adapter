@@ -6,11 +6,31 @@ from pydantic import BaseModel
 from datetime import datetime
 
 
+
 class Song(BaseModel):
-    # TODO: add more info here
-    id: str
-    name: str
-    artists: List[str]
+    track_id: Optional[str] = None
+    track_name: Optional[str] = None
+    track_artist: Optional[str] = None
+    track_popularity: Optional[float] = None
+    track_album_id: Optional[str] = None
+    track_album_name: Optional[str] = None
+    track_album_release_date: Optional[str] = None
+    playlist_name: Optional[str] = None
+    playlist_id: Optional[str] = None
+    playlist_genre: Optional[str] = None
+    playlist_subgenre: Optional[str] = None
+    danceability: Optional[float] = None
+    energy: Optional[float] = None
+    key: Optional[float] = None
+    loudness: Optional[float] = None
+    mode: Optional[float] = None
+    speechiness: Optional[float] = None
+    acousticness: Optional[float] = None
+    instrumentalness: Optional[float] = None
+    liveness: Optional[float] = None
+    valence: Optional[float] = None
+    tempo: Optional[float] = None
+    duration_ms: Optional[float] = None
     
 class Traits(BaseModel):
     min_acousticness: Optional[float] = None
