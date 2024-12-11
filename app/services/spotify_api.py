@@ -164,19 +164,20 @@ class SpotifyAPIService:
             raise Exception(f"An error occurred while fetching user playlists: {str(e)}")
 
 
-    def create_playlist(self, user_id: str, token: SpotifyToken, name: str, description: str, song_ids: List[str], public: bool = False):
+    def create_playlist(self, user_id: str, token: SpotifyToken, name: str, song_ids: List[str], public: bool = False):
         headers = {
             "Authorization": f"Bearer {token.access_token}"
         }
 
         # Create the playlist
         try:
-            url = "https://api.spotify.com/v1/users/{user_id}/playlists"
+            url = f"https://api.spotify.com/v1/users/{user_id}/playlists"
             body = {
                 "name": name,
                 "public": public,
                 "description": "Playlist from Subwoofer"
             }
+            print(f"Creating playlist: {body}, {user_id}")
             response = requests.post(url, headers=headers, json=body)
             if response.status_code != 201:
                 raise Exception(f"Failed to create playlist: {response.status_code} - {response.text}")

@@ -28,7 +28,6 @@ class LoginResponse(BaseModel):
 class CreatePlaylistRequest(BaseModel):
     token: SpotifyToken
     name: str
-    description: str
     song_ids: List[str]
 
 
@@ -53,10 +52,10 @@ async def get_user_playlists(user_id: str, spotify_token: SpotifyToken, token: s
 async def create_playlist(user_id: str, request: CreatePlaylistRequest, token: str = Depends(oauth2_scheme)):
     api_service = ServiceFactory.get_service("SpotifyAPIService")
 
-    if not api_service.validate_token(token, id=user_id, scope=("/playlists", "POST")):
+    if not api_service.validate_token(token, id=user_id, scope=("/users/{user_id}/playlists", "POST")):
         raise HTTPException(status_code=401, detail="Invalid Token")
 
-    api_service.create_playlist(user_id, request.token, request.name, request.description, request.song_ids)
+    api_service.create_playlist(user_id, request.token, request.name, request.song_ids)
 
 @router.get("/users/{user_id}/refreshed_token", tags=["users"])
 async def get_refreshed_token(user_id: str,
